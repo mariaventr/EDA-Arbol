@@ -187,18 +187,31 @@ class arbol:
             return self.buscarRecursion(nodo.getIzq(), valor)
         else:
             return self.buscarRecursion(nodo.getDer(), valor)
-
-
-
-
+            
                     
 if __name__=="__main__":
     a=arbol()
+    print(a.getCabeza())
     a.insertar(1)
     a.insertar(3)
-    a.insertar(2)
-    a.insertar(1)
     a.insertar(10)
-    a.insertar(4)
-    nodo=a.getCabeza()
-    a.recorrer(nodo)
+    a.insertar(40)
+    a.insertar(20)
+    print(f"Despues de insertar: ")
+    a.InOrden(a.getCabeza())
+    a.suprimir(1)
+    print(f"Despues de Suprmir:")
+    a.InOrden(a.getCabeza())
+
+    print(f"Hoja: {a.Hoja(a.getCabeza(), 3)}")
+    print(f"Padre: {a.Padre(a.getCabeza(),None, 4)}")
+    print(f"Camino: {a.Camino(0, 10)}")
+    print(f"Altura: {a.Altura(a.getCabeza())}")
+    print(f"Buscar 1: {a.buscarRecursion(a.getCabeza(),1)}")
+
+    print("PreOrden")
+    a.preOrdenRecursion(a.getCabeza())
+
+    print("PostOrden")
+    print(a.postOrdenRecursion(a.getCabeza()))
+
