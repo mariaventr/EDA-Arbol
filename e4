@@ -1,0 +1,163 @@
+class Nodo:
+    __dato=int
+    __izq=None
+    __der=None
+    def __init__(self, dato):
+        self.__dato = dato
+        self.__izq = None
+        self.__der = None
+
+    def getValor(self):
+        return self.__dato
+    
+    def getIzq(self):
+        return self.__izq
+    
+    def getDer(self):
+        return self.__der
+    
+    def setIzq(self, objeto):
+        self.__izq=objeto
+
+    def setDer(self, objeto):
+        self.__der=objeto
+
+    def setValor(self, objeto):
+        self.__dato=objeto
+    
+class arbol:
+    __cabeza=None
+    def __init__(self):
+        self.__cabeza=None
+
+    def getCabeza(self):
+        return self.__cabeza
+
+    def insertar(self, objeto):
+        if self.__cabeza is None:
+            nodo=Nodo(objeto)
+            self.__cabeza=nodo
+        else:
+            self.insertarRecursion(self.__cabeza, objeto)
+
+    def insertarRecursion(self, cab, objeto):
+        if cab.getValor()==objeto:
+            print("Elemento ya existente")
+        else:
+            if objeto < cab.getValor():
+                if cab.getIzq() is None:
+                    nodo=Nodo(objeto)
+                    cab.setIzq(nodo)
+                else:
+                    self.insertarRecursion(cab.getIzq(), objeto)
+            else:
+                if objeto > cab.getValor():
+                    if cab.getDer() is None:
+                        nodo=Nodo(objeto)
+                        cab.setDer(nodo)
+                    else:
+                        self.insertarRecursion(cab.getDer(), objeto)
+
+    def Padre_Hermano(self, valor):
+        if self.__cabeza is None:
+            print("El árbol está vacío.")
+            return
+
+        padre, hermano = self._encontrar_padre_hermano(self.__cabeza, None, valor)
+        
+        if padre is not None:
+            print(f"Padre de {valor}: {padre.getValor()}")
+            if hermano is not None:
+                print(f"Hermano de {valor}: {hermano.getValor()}")
+            else:
+                print(f"No hay hermano de {valor}.")
+        else:
+            print(f"No se encontró el nodo {valor} en el árbol.")
+
+    def _encontrar_padre_hermano(self, nodo, padre, valor):
+        if nodo is None:
+            return None, None
+        if nodo.getValor() == valor:
+            return padre, None
+        if nodo.getIzq() and nodo.getIzq().getValor() == valor:
+            hermano = nodo.getDer() if nodo.getDer() else None
+            return padre, hermano
+        if nodo.getDer() and nodo.getDer().getValor() == valor:
+            hermano = nodo.getIzq() if nodo.getIzq() else None
+            return padre, hermano
+        
+        izquierda_padre, izquierda_hermano = self._encontrar_padre_hermano(nodo.getIzq(), nodo, valor)
+        if izquierda_padre is not None:
+            return izquierda_padre, izquierda_hermano
+        
+        derecha_padre, derecha_hermano = self._encontrar_padre_hermano(nodo.getDer(), nodo, valor)
+        if derecha_padre is not None:
+            return derecha_padre, derecha_hermano
+        
+        return None, None
+    
+    def contar_nodos_recursivo(self, nodo):
+        if nodo is None:
+            return 0
+        return 1 + self.contar_nodos_recursivo(nodo.getIzq()) + self.contar_nodos_recursivo(nodo.getDer())
+
+    def contar_nodos(self):
+        return self.contar_nodos_recursivo(self.__cabeza)
+    
+    def Altura(self, nodo):
+        if nodo is None:
+            return 0
+        izquierda = self.Altura(nodo.getIzq())
+        derecha = self.Altura(nodo.getDer())
+        return max(izquierda, derecha) + 1
+    
+    def sucesores(self, valor):
+        nodo = self.buscarRecursion(self.__cabeza, valor)
+        if nodo:
+            sucesores = []
+            self._encontrar_sucesores(nodo, sucesores)
+            return sucesores
+        else:
+            return []
+
+    def _encontrar_sucesores(self, nodo, sucesores):
+        if nodo:
+            sucesores.append(nodo.getValor())
+            self._encontrar_sucesores(nodo.getIzq(), sucesores)
+            self._encontrar_sucesores(nodo.getDer(), sucesores)
+
+    def buscarRecursion(self, nodo, valor):
+        if nodo is None:
+            return None
+        if nodo.getValor() == valor:
+            return nodo
+        if valor < nodo.getValor():
+            return self.buscarRecursion(nodo.getIzq(), valor)
+        else:
+            return self.buscarRecursion(nodo.getDer(), valor)
+
+mi_arbol = arbol()
+mi_arbol.insertar(10)
+mi_arbol.insertar(5)
+mi_arbol.insertar(15)
+mi_arbol.insertar(3)
+mi_arbol.insertar(7)
+mi_arbol.insertar(12)
+mi_arbol.insertar(18)
+cab=mi_arbol.getCabeza()
+
+# Mostrar el nodo padre y hermano de un nodo (ejemplo con nodo 12):
+mi_arbol.Padre_Hermano(12)
+
+# Mostrar la cantidad de nodos del árbol:
+print("Cantidad de nodos:", mi_arbol.contar_nodos())
+
+# Mostrar la altura del árbol:
+print("Altura del árbol:", mi_arbol.Altura(cab))
+
+# Mostrar los sucesores de un nodo (ejemplo con nodo 10):
+print("Sucesores de 10:", mi_arbol.sucesores(10))
+
+
+
+
