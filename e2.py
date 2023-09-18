@@ -1,5 +1,4 @@
 import heapq
-import collections
 import os
 
 class NodoHuffman:
@@ -13,9 +12,14 @@ class NodoHuffman:
         return self.frecuencia < otro.frecuencia
 
 def calcular_frecuencias(archivo):
-    with open(archivo, 'r') as file:
-        contenido = file.read()
-        frecuencias = collections.Counter(contenido)
+    frecuencias = {}
+    with open(archivo, 'r') as f:
+        texto = f.read()
+        for caracter in texto:
+            if caracter in frecuencias:
+                frecuencias[caracter] += 1
+            else:
+                frecuencias[caracter] = 1
     return frecuencias
 
 def construir_arbol_huffman(frecuencias):
@@ -23,68 +27,48 @@ def construir_arbol_huffman(frecuencias):
     heapq.heapify(cola_prioridad)
 
     while len(cola_prioridad) > 1:
-        nodo_izq = heapq.heappop(cola_prioridad)
-        nodo_der = heapq.heappop(cola_prioridad)
-        nuevo_nodo = NodoHuffman(None, nodo_izq.frecuencia + nodo_der.frecuencia)
-        nuevo_nodo.izquierda = nodo_izq
-        nuevo_nodo.derecha = nodo_der
-        heapq.heappush(cola_prioridad, nuevo_nodo)
+        nodo_izquierda = heapq.heappop(cola_prioridad)
+        nodo_derecha = heapq.heappop(cola_prioridad)
+        nodo_padre = NodoHuffman(None, nodo_izquierda.frecuencia + nodo_derecha.frecuencia)
+        nodo_padre.izquierda = nodo_izquierda
+        nodo_padre.derecha = nodo_derecha
+        heapq.heappush(cola_prioridad, nodo_padre)
 
     return cola_prioridad[0]
 
-def codificar_caracteres(arbol_huffman):
-    mapa_codificacion = {}
+def codificar_caracteres(arbol, prefijo="", codificaciones={}):
+    if arbol is not None:
+        if arbol.caracter is not None:
+            codificaciones[arbol.caracter] = prefijo
+        codificar_caracteres(arbol.izquierda, prefijo + "0", codificaciones)
+        codificar_caracteres(arbol.derecha, prefijo + "1", codificaciones)
 
-    def codificar_recursivo(nodo, codigo_actual=""):
-        if nodo is not None:
-            if nodo.caracter is not None:
-                mapa_codificacion[nodo.caracter] = codigo_actual
-            codificar_recursivo(nodo.izquierda, codigo_actual + "0")
-            codificar_recursivo(nodo.derecha, codigo_actual + "1")
+def comprimir_archivo(archivo_entrada, archivo_salida):
+    frecuencias = calcular_frecuencias(archivo_entrada)
+    arbol = construir_arbol_huffman(frecuencias)
+    codificaciones = {}
+    codificar_caracteres(arbol, "", codificaciones)
 
-    codificar_recursivo(arbol_huffman)
-    return mapa_codificacion
-
-def comprimir_archivo(archivo_entrada, archivo_salida, mapa_codificacion):
     with open(archivo_entrada, 'r') as entrada, open(archivo_salida, 'wb') as salida:
-        contenido = entrada.read()
-        bits = "".join(mapa_codificacion[caracter] for caracter in contenido)
-        bytes_comprimidos = bytearray()
-        while bits:
-            byte, bits = bits[:8], bits[8:]
-            bytes_comprimidos.append(int(byte, 2))
-        salida.write(bytes_comprimidos)
+        bits = ""
+        while True:
+            caracter = entrada.read(1)
+            if not caracter:
+                break
+            bits += codificaciones[caracter]
+            while len(bits) >= 8:
+                byte = bits[:8]
+                bits = bits[8:]
+                salida.write(bytes([int(byte, 2)]))
 
-def descomprimir_archivo(archivo_comprimido, archivo_descomprimido, arbol_huffman):
-    with open(archivo_comprimido, 'rb') as entrada, open(archivo_descomprimido, 'w') as salida:
-        bits = "".join(f'{byte:08b}' for byte in entrada.read())
-        nodo_actual = arbol_huffman
-        for bit in bits:
-            if bit == '0':
-                nodo_actual = nodo_actual.izquierda
-            else:
-                nodo_actual = nodo_actual.derecha
-            if nodo_actual.caracter is not None:
-                salida.write(nodo_actual.caracter)
-                nodo_actual = arbol_huffman
+        if bits:
+            padding = 8 - len(bits)
+            bits += "0" * padding
+            salida.write(bytes([int(bits, 2)]))
+            salida.write(bytes([padding]))
 
 if __name__ == "__main__":
-    archivo_entrada = "archivo_original.txt"
-    archivo_comprimido = "archivo_comprimido.bin"
-    archivo_descomprimido = "archivo_descomprimido.txt"
-
-    # Calcular frecuencias de caracteres
-    frecuencias = calcular_frecuencias(archivo_entrada)
-
-    # Construir árbol de Huffman
-    arbol_huffman = construir_arbol_huffman(frecuencias)
-
-    # Crear mapa de codificación
-    mapa_codificacion = codificar_caracteres(arbol_huffman)
-
-    # Comprimir archivo
-    comprimir_archivo(archivo_entrada, archivo_comprimido, mapa_codificacion)
-
-    # Descomprimir archivo
-    descomprimir_archivo(archivo_comprimido, archivo_descomprimido, arbol_huffman)
-      
+    archivo_entrada = "texto.txt"  # Cambia esto al nombre de tu archivo de entrada
+    archivo_salida = "comprimido.bin"
+    comprimir_archivo(archivo_entrada, archivo_salida)
+        
