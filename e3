@@ -1,0 +1,84 @@
+class Nodo:
+    __dato=int
+    __izq=None
+    __der=None
+    def __init__(self, dato):
+        self.__dato = dato
+        self.__izq = None
+        self.__der = None
+
+    def getValor(self):
+        return self.__dato
+    
+    def getIzq(self):
+        return self.__izq
+    
+    def getDer(self):
+        return self.__der
+    
+    def setIzq(self, objeto):
+        self.__izq=objeto
+
+    def setDer(self, objeto):
+        self.__der=objeto
+
+    def setValor(self, objeto):
+        self.__dato=objeto
+    
+class ArbolBinarioBusqueda:
+    __cabeza=None
+    def __init__(self):
+        self.__cabeza=None
+
+    def getCabeza(self):
+        return self.__cabeza
+
+    def insertar(self, objeto):
+        if self.__cabeza is None:
+            nodo=Nodo(objeto)
+            self.__cabeza=nodo
+        else:
+            self.insertarRecursion(self.__cabeza, objeto)
+
+    def insertarRecursion(self, cab, objeto):
+        if cab.getValor()==objeto:
+            print("Elemento ya existente")
+        else:
+            if objeto < cab.getValor():
+                if cab.getIzq() is None:
+                    nodo=Nodo(objeto)
+                    cab.setIzq(nodo)
+                else:
+                    self.insertarRecursion(cab.getIzq(), objeto)
+            else:
+                if objeto > cab.getValor():
+                    if cab.getDer() is None:
+                        nodo=Nodo(objeto)
+                        cab.setDer(nodo)
+                    else:
+                        self.insertarRecursion(cab.getDer(), objeto)
+
+    def mostrar_frontera(self):
+        frontera = []
+        self._mostrar_frontera_recursivo(self.__cabeza, frontera)
+        return frontera
+
+    def _mostrar_frontera_recursivo(self, nodo, frontera):
+        if nodo:
+            if nodo.getIzq() is None and nodo.getDer() is None:
+                frontera.append(nodo.getValor())
+            self._mostrar_frontera_recursivo(nodo.getIzq(), frontera)
+            self._mostrar_frontera_recursivo(nodo.getDer(), frontera)
+
+# Ejemplo de uso:
+arbol = ArbolBinarioBusqueda()
+arbol.insertar(10)
+arbol.insertar(5)
+arbol.insertar(15)
+arbol.insertar(3)
+arbol.insertar(7)
+arbol.insertar(12)
+arbol.insertar(18)
+
+frontera = arbol.mostrar_frontera()
+print("Frontera del ABB:", frontera)
