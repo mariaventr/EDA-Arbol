@@ -1,3 +1,4 @@
+
 class Nodo:
     __dato=int
     __izq=None
@@ -21,6 +22,9 @@ class Nodo:
 
     def setDer(self, objeto):
         self.__der=objeto
+
+    def setValor(self, objeto):
+        self.__dato=objeto
     
 class arbol:
     __cabeza=None
@@ -35,9 +39,9 @@ class arbol:
             nodo=Nodo(objeto)
             self.__cabeza=nodo
         else:
-            self.recursion(self.__cabeza, objeto)
+            self.insertarRecursion(self.__cabeza, objeto)
 
-    def recursion(self, cab, objeto):
+    def insertarRecursion(self, cab, objeto):
         if cab.getValor()==objeto:
             print("Elemento ya existente")
         else:
@@ -46,20 +50,144 @@ class arbol:
                     nodo=Nodo(objeto)
                     cab.setIzq(nodo)
                 else:
-                    self.recursion(cab.getIzq(), objeto)
+                    self.insertarRecursion(cab.getIzq(), objeto)
             else:
                 if objeto > cab.getValor():
                     if cab.getDer() is None:
                         nodo=Nodo(objeto)
                         cab.setDer(nodo)
                     else:
-                        self.recursion(cab.getDer(), objeto)
+                        self.insertarRecursion(cab.getDer(), objeto)
 
-    def recorrer(self, nodo):
+    def suprimir(self, valor):
+        if self.__cabeza is None:
+            print("El árbol está vacío. No se puede eliminar el elemento.")
+        else:
+            self.__cabeza = self.suprimirRecursion(self.__cabeza, valor)
+
+    def suprimirRecursion(self, nodo, valor):
+        if nodo is None:
+            print(f"El elemento {valor} no existe en el árbol.")
+        else:
+            if valor < nodo.getValor():
+                nodo.setIzq(self.suprimirRecursion(nodo.getIzq(), valor))
+            elif valor > nodo.getValor():
+                nodo.setDer(self.suprimirRecursion(nodo.getDer(), valor))
+            else:
+                if nodo.getIzq() is None and nodo.getDer() is None:
+                    nodo = None
+                elif nodo.getIzq() is None:
+                    nodo = nodo.getDer()
+                elif nodo.getDer() is None:
+                    nodo = nodo.getIzq()
+                else:
+                    max_izquierdo = self.maximo(nodo.getIzq())
+                    nodo.setValor(max_izquierdo.getValor())
+                    nodo.setIzq(self.suprimirRecursion(nodo.getIzq(), max_izquierdo.getValor()))
+        return nodo
+
+    def maximo(self, nodo):
+        while nodo.getDer() is not None:
+            nodo = nodo.getDer()
+        return nodo
+
+    def Hoja(self, nodo, valor):
+        if nodo is None:
+            return False
+        if nodo.getValor() == valor and nodo.getIzq() is None and nodo.getDer() is None:
+            return True
+        return self.Hoja(nodo.getIzq(), valor) or self.Hoja(nodo.getDer(), valor)
+
+    def Nivel(self, nodo, valor, nivel_actual):
+        if nodo is None:
+            return -1  # Valor no encontrado
+        if nodo.getValor() == valor:
+            return nivel_actual
+        nivel_izq = self.Nivel(nodo.getIzq(), valor, nivel_actual + 1)
+        if nivel_izq != -1:
+            return nivel_izq
+        nivel_der = self.Nivel(nodo.getDer(), valor, nivel_actual + 1)
+        return nivel_der
+
+    def Hijo(self, nodo, padre_valor, hijo_valor):
+        if nodo is None:
+            return False
+        if nodo.getValor() == padre_valor:
+            if nodo.getIzq() and nodo.getIzq().getValor() == hijo_valor:
+                return True
+            if nodo.getDer() and nodo.getDer().getValor() == hijo_valor:
+                return True
+        return self.Hijo(nodo.getIzq(), padre_valor, hijo_valor) or self.Hijo(nodo.getDer(), padre_valor, hijo_valor)
+
+    def Padre(self, nodo, padre, hijo_valor):
+        if nodo is None:
+            return None  # Valor no encontrado
+        if nodo.getValor() == hijo_valor:
+            return padre.getValor() if padre else None
+        izquierda = self.Padre(nodo.getIzq(), nodo, hijo_valor)
+        if izquierda:
+            return izquierda
+        derecha = self.Padre(nodo.getDer(), nodo, hijo_valor)
+        return derecha
+
+
+    def Camino(self, inicio_valor, final_valor):
+        camino = self.encontrarCamino(self.__cabeza, [], inicio_valor, final_valor)
+        if camino:
+            return camino
+
+    def encontrarCamino(self, nodo, camino_actual, inicio_valor, final_valor):
+        if nodo is None:
+            return None
+        camino_actual.append(nodo.getValor())
+        if nodo.getValor() == final_valor:
+            return camino_actual
+        izquierda = self.encontrarCamino(nodo.getIzq(), camino_actual.copy(), inicio_valor, final_valor)
+        if izquierda:
+            return izquierda
+        derecha = self.encontrarCamino(nodo.getDer(), camino_actual.copy(), inicio_valor, final_valor)
+        return derecha
+
+    def Altura(self, nodo):
+        if nodo is None:
+            return 0
+        izquierda = self.Altura(nodo.getIzq())
+        derecha = self.Altura(nodo.getDer())
+        return max(izquierda, derecha) + 1
+    
+    def InOrden(self, nodo):
         if nodo:
-            self.recorrer(nodo.getIzq())
+            self.InOrden(nodo.getIzq())
             print(nodo.getValor())
-            self.recorrer(nodo.getDer())
+            self.InOrden(nodo.getDer())
+
+    def preOrdenRecursion(self, nodo):
+        if nodo:
+            print(nodo.getValor())  # Imprimir el valor del nodo en lugar de agregarlo a la lista
+            self.preOrdenRecursion(nodo.getIzq())
+            self.preOrdenRecursion(nodo.getDer())
+
+
+    def postOrdenRecursion(self, nodo):
+        if nodo:
+            resultado = []
+            resultado += self.postOrdenRecursion(nodo.getIzq())
+            resultado += self.postOrdenRecursion(nodo.getDer())
+            resultado.append(nodo.getValor())
+            return resultado
+        return []
+
+
+    def buscarRecursion(self, nodo, valor):
+        if nodo is None:
+            return "Error - Elemento Inexistente"
+        if nodo.getValor() == valor:
+            return "Éxito - Elemento existente"
+        elif valor < nodo.getValor():
+            return self.buscarRecursion(nodo.getIzq(), valor)
+        else:
+            return self.buscarRecursion(nodo.getDer(), valor)
+
 
 
 
