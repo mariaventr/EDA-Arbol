@@ -4,16 +4,19 @@ class Item:
         self.count = 1
         self.p = None
 
-class Page:
+class Pagina:
     def __init__(self):
         self.m = 0
         self.p0 = None
         self.e = []
 
-n = 2
+orden = 2
 raiz = None
 
-def binary_search(a, x):
+def buscar(a, x):
+    if a is None:
+        return None
+
     l, r = 0, a.m - 1
 
     while l <= r:
@@ -25,90 +28,91 @@ def binary_search(a, x):
 
     return l
 
-def insert(x, a):
+def insertar(x, a):
     global raiz
     if a is None:
         v = Item(x)
-        raiz = Page()
+        raiz = Pagina()
         raiz.m = 1
         raiz.e.append(v)
         return
 
-    index = binary_search(a, x)
+    index = buscar(a, x)
 
     if index < a.m and a.e[index].key == x:
         a.e[index].count += 1
     else:
-        insert_page(x, a, index)
+        insertar_pagina(x, a, index)
 
-def insert_page(x, a, index):
+def insertar_pagina(x, a, index):
     global raiz
     v = Item(x)
-    if a.m < 2 * n:
+    if a.m < 2 * orden:
         a.e.insert(index, v)
         a.m += 1
     else:
-        split_page(x, a, index)
+        dividir_pagina(x, a, index)
 
-def split_page(x, a, index):
+def dividir_pagina(x, a, index):
     global raiz
-    b = Page()
-    mid = n
+    b = Pagina()
+    mid = orden
 
-    if index <= n:
+    if index <= orden:
         mid -= 1
 
     b.e = a.e[mid + 1:]
     a.e = a.e[:mid]
     a.m = len(a.e)
 
-    if index <= n:
-        insert_page(x, a, index)
+    if index <= orden:
+        insertar_pagina(x, a, index)
     else:
-        insert_page(x, b, index - mid - 1)
+        insertar_pagina(x, b, index - mid - 1)
 
     if a is raiz:
-        raiz = Page()
+        raiz = Pagina()
         raiz.m = 1
         raiz.e.append(b)
         raiz.p0 = a
 
-def search(x, a):
+def buscar_elemento(x, a):
     if a is None:
         return None
 
-    index = binary_search(a, x)
+    index = buscar(a, x)
 
     if index < a.m and a.e[index].key == x:
         return a.e[index]
 
     if index <= a.m:
-        return search(x, a.e[index].p)
+        return buscar_elemento(x, a.e[index].p)
 
-def delete(x, a):
+def eliminar(x, a):
     if a is None:
         return
 
-    index = binary_search(a, x)
+    index = buscar(a, x)
 
     if index < a.m and a.e[index].key == x:
         if a.e[index].count > 1:
             a.e[index].count -= 1
         else:
-            delete_entry(x, a, index)
+            eliminar_entrada(x, a, index)
     else:
-        delete(x, a.e[index].p)
+        eliminar(x, a.e[index].p)
 
-def delete_entry(x, a, index):
-    if a.m > n:
+def eliminar_entrada(x, a, index):
+    global raiz
+    if a.m > orden:
         if index > 0:
             a.e[index - 1].count -= 1
         else:
             a.e[index + 1].count -= 1
     else:
-        delete_merge(x, a, index)
+        eliminar_combinacion(x, a, index)
 
-def delete_merge(x, a, index):
+def eliminar_combinacion(x, a, index):
     global raiz
     if a is raiz:
         if a.m == 1 and a.p0 is not None:
@@ -118,54 +122,54 @@ def delete_merge(x, a, index):
     prev = a.e[index - 1]
     next = a.e[index + 1]
 
-    if prev.m > n:
-        borrow_from_prev(x, a, prev, index)
-    elif next.m > n:
-        borrow_from_next(x, a, next, index)
+    if prev.m > orden:
+        tomar_de_anterior(x, a, prev, index)
+    elif next.m > orden:
+        tomar_de_siguiente(x, a, next, index)
     else:
-        merge(a, index)
+        combinar(a, index)
 
-def borrow_from_prev(x, a, prev, index):
-    child = a.e[index].p
-    sibling = a.e[index - 1].p
-    child.e.insert(0, sibling.e.pop())
+def tomar_de_anterior(x, a, prev, index):
+    hijo = a.e[index].p
+    hermano = a.e[index - 1].p
+    hijo.e.insert(0, hermano.e.pop())
     a.e[index - 1] = prev.e.pop()
-    a.e.insert(index, child.e.pop(0))
+    a.e.insert(index, hijo.e.pop(0))
 
-def borrow_from_next(x, a, next, index):
-    child = a.e[index].p
-    sibling = a.e[index + 1].p
-    child.e.append(next.e.pop(0))
+def tomar_de_siguiente(x, a, next, index):
+    hijo = a.e[index].p
+    hermano = a.e[index + 1].p
+    hijo.e.append(next.e.pop(0))
     a.e[index + 1] = next.e[0]
-    a.e[index] = child.e.pop()
+    a.e[index] = hijo.e.pop()
 
-def merge(a, index):
+def combinar(a, index):
     global raiz
     if index == a.m:
         index -= 1
 
-    child = a.e[index].p
-    sibling = a.e[index + 1].p
-    child.e.append(a.e[index])
-    child.e.extend(sibling.e)
+    hijo = a.e[index].p
+    hermano = a.e[index + 1].p
+    hijo.e.append(a.e[index])
+    hijo.e.extend(hermano.e)
     a.e.pop(index + 1)
     a.m -= 1
 
-def print_tree(node, level=0):
-    if node:
-        print("Level", level, ":", end=" ")
-        for item in node.e:
+def imprimir_arbol(nodo, nivel=0):
+    if nodo:
+        print("Nivel", nivel, ":", end=" ")
+        for item in nodo.e:
             print(item.key, end=" ")
         print()
-        level += 1
-        if node.e:
-            for child in node.e:
-                print_tree(child.p, level)
+        nivel += 1
+        if nodo.e:
+            for hijo in nodo.e:
+                imprimir_arbol(hijo.p, nivel)
 
 while True:
     print("\n\n Menú ")
     print("\n 1_ Insertar ")
-    print("\n 2_ Suprimir ")
+    print("\n 2_ Eliminar ")
     print("\n 3_ Mostrar ")
     print("\n 4_ Salir ")
     print("\n")
@@ -176,19 +180,19 @@ while True:
         x = int(input())
 
         while x >= 0:
-            insert(x, raiz)
+            insertar(x, raiz)
             print("\n Ingrese clave a insertar (Finaliza con -1) ")
             x = int(input())
     elif op == 2:
-        print("Ingrese clave a suprimir (Finaliza con -1) ")
+        print("Ingrese clave a eliminar (Finaliza con -1) ")
         x = int(input())
 
         while x >= 0:
-            delete(x, raiz)
-            print("\n Ingrese clave a suprimir (Finaliza con -1) ")
+            eliminar(x, raiz)
+            print("\n Ingrese clave a eliminar (Finaliza con -1) ")
             x = int(input())
     elif op == 3:
-        print_tree(raiz)
+        imprimir_arbol(raiz)
     elif op == 4:
         break
-    
+        
