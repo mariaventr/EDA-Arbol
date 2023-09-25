@@ -1,198 +1,147 @@
-class Item:
-    def __init__(self, key):
-        self.key = key
-        self.count = 1
-        self.p = None
+class NodoB:
+    def __init__(self, hoja=True):
+        self.hoja = hoja
+        self.claves = []
+        self.hijos = []
 
-class Pagina:
+    def es_hoja(self):
+        return self.hoja
+
+
+class ArbolB:
     def __init__(self):
-        self.m = 0
-        self.p0 = None
-        self.e = []
+        self.raiz = NodoB()
 
-orden = 2
-raiz = None
+    def insertar(self, valor):
+        nodo_actual = self.raiz
+        if len(nodo_actual.claves) == 2:
+            nueva_raiz = NodoB(hoja=False)
+            nueva_raiz.hijos.append(self.raiz)
+            self.dividir(nueva_raiz, 0)
+            self.raiz = nueva_raiz
+        self.insertar_no_lleno(self.raiz, valor)
 
-def buscar(a, x):
-    if a is None:
-        return None
-
-    l, r = 0, a.m - 1
-
-    while l <= r:
-        i = (l + r) // 2
-        if a.e[i].key < x:
-            l = i + 1
+    def insertar_no_lleno(self, nodo, valor):
+        i = len(nodo.claves) - 1
+        if nodo.es_hoja():
+            nodo.claves.append(None)
+            while i >= 0 and valor < nodo.claves[i]:
+                nodo.claves[i + 1] = nodo.claves[i]
+                i -= 1
+            nodo.claves[i + 1] = valor
         else:
-            r = i - 1
+            while i >= 0 and valor < nodo.claves[i]:
+                i -= 1
+            i += 1
+            if len(nodo.hijos[i].claves) == 2:
+                self.dividir(nodo, i)
+                if valor > nodo.claves[i]:
+                    i += 1
+            self.insertar_no_lleno(nodo.hijos[i], valor)
 
-    return l
+    def dividir(self, padre, indice):
+        nuevo_nodo = NodoB()
+        nodo_dividido = padre.hijos[indice]
+        padre.claves.insert(indice, nodo_dividido.claves[1])
+        padre.hijos.insert(indice + 1, nuevo_nodo)
+        nuevo_nodo.claves.append(nodo_dividido.claves[2])
+        nodo_dividido.claves = nodo_dividido.claves[:1]
+        if not nodo_dividido.es_hoja():
+            nuevo_nodo.hijos.extend(nodo_dividido.hijos[2:])
+            nodo_dividido.hijos = nodo_dividido.hijos[:2]
 
-def insertar(x, a):
-    global raiz
-    if a is None:
-        v = Item(x)
-        raiz = Pagina()
-        raiz.m = 1
-        raiz.e.append(v)
-        return
+    def suprimir(self, valor):
+        self.suprimir_recursivo(self.raiz, valor)
 
-    index = buscar(a, x)
+    def suprimir_recursivo(self, nodo, valor):
+        if not nodo:
+            return False
 
-    if index < a.m and a.e[index].key == x:
-        a.e[index].count += 1
-    else:
-        insertar_pagina(x, a, index)
+        i = 0
+        while i < len(nodo.claves) and valor > nodo.claves[i]:
+            i += 1
 
-def insertar_pagina(x, a, index):
-    global raiz
-    v = Item(x)
-    if a.m < 2 * orden:
-        a.e.insert(index, v)
-        a.m += 1
-    else:
-        dividir_pagina(x, a, index)
-
-def dividir_pagina(x, a, index):
-    global raiz
-    b = Pagina()
-    mid = orden
-
-    if index <= orden:
-        mid -= 1
-
-    b.e = a.e[mid + 1:]
-    a.e = a.e[:mid]
-    a.m = len(a.e)
-
-    if index <= orden:
-        insertar_pagina(x, a, index)
-    else:
-        insertar_pagina(x, b, index - mid - 1)
-
-    if a is raiz:
-        raiz = Pagina()
-        raiz.m = 1
-        raiz.e.append(b)
-        raiz.p0 = a
-
-def buscar_elemento(x, a):
-    if a is None:
-        return None
-
-    index = buscar(a, x)
-
-    if index < a.m and a.e[index].key == x:
-        return a.e[index]
-
-    if index <= a.m:
-        return buscar_elemento(x, a.e[index].p)
-
-def eliminar(x, a):
-    if a is None:
-        return
-
-    index = buscar(a, x)
-
-    if index < a.m and a.e[index].key == x:
-        if a.e[index].count > 1:
-            a.e[index].count -= 1
+        if i < len(nodo.claves) and valor == nodo.claves[i]:
+            if nodo.es_hoja():
+                nodo.claves.pop(i)
+            else:
+                pred = self.obtener_predecesor(nodo, i)
+                nodo.claves[i] = pred
+                self.suprimir_recursivo(nodo.hijos[i], pred)
         else:
-            eliminar_entrada(x, a, index)
-    else:
-        eliminar(x, a.e[index].p)
+            es_hoja = nodo.es_hoja()
+            if len(nodo.hijos) > i and not es_hoja:
+                if len(nodo.hijos[i].claves) == 1:
+                    if i > 0 and len(nodo.hijos[i - 1].claves) > 1:
+                        self.redistribuir_hijos(nodo, i - 1, i)
+                    elif i < len(nodo.hijos) - 1 and len(nodo.hijos[i + 1].claves) > 1:
+                        self.redistribuir_hijos(nodo, i, i + 1)
+                    else:
+                        if i == len(nodo.hijos) - 1:
+                            self.fusionar_nodos(nodo, i - 1, i)
+                        else:
+                            self.fusionar_nodos(nodo, i, i + 1)
+                self.suprimir_recursivo(nodo.hijos[i], valor)
+            elif es_hoja:
+                print(f"El valor {valor} no se encuentra en el árbol.")
 
-def eliminar_entrada(x, a, index):
-    global raiz
-    if a.m > orden:
-        if index > 0:
-            a.e[index - 1].count -= 1
+    def redistribuir_hijos(self, padre, i, j):
+        nodo_i = padre.hijos[i]
+        nodo_j = padre.hijos[j]
+        nodo_i.claves.append(padre.claves[i])
+        padre.claves[i] = nodo_j.claves[0]
+        nodo_j.claves.pop(0)
+        if not nodo_i.es_hoja():
+            nodo_i.hijos.append(nodo_j.hijos[0])
+            nodo_j.hijos.pop(0)
+
+    def fusionar_nodos(self, padre, i, j):
+        nodo_i = padre.hijos[i]
+        nodo_j = padre.hijos[j]
+        nodo_i.claves.append(padre.claves[i])
+        nodo_i.claves.extend(nodo_j.claves)
+        if not nodo_i.es_hoja():
+            nodo_i.hijos.extend(nodo_j.hijos)
+        padre.claves.pop(i)
+        padre.hijos.pop(j)
+
+    def obtener_predecesor(self, nodo, i):
+        nodo_actual = nodo.hijos[i]
+        while not nodo_actual.es_hoja():
+            nodo_actual = nodo_actual.hijos[-1]
+        return nodo_actual.claves[-1]
+
+    def mostrar(self):
+        self.mostrar_recursivo(self.raiz)
+
+    def mostrar_recursivo(self, nodo, prefijo=""):
+        if nodo:
+            print(prefijo + str(nodo.claves))
+            if not nodo.es_hoja():
+                for i in range(len(nodo.hijos)):
+                    self.mostrar_recursivo(nodo.hijos[i], prefijo + "  ")
+
+if __name__ == "__main__":
+    arbol_b = ArbolB()
+
+    while True:
+        print("\nMenu:")
+        print("1. Insertar")
+        print("2. Suprimir")
+        print("3. Mostrar")
+        print("4. Salir")
+        opcion = input("Seleccione una opción: ")
+
+        if opcion == "1":
+            valor = int(input("Ingrese el valor a insertar: "))
+            arbol_b.insertar(valor)
+        elif opcion == "2":
+            valor = int(input("Ingrese el valor a suprimir: "))
+            arbol_b.suprimir(valor)
+        elif opcion == "3":
+            arbol_b.mostrar()
+        elif opcion == "4":
+            break
         else:
-            a.e[index + 1].count -= 1
-    else:
-        eliminar_combinacion(x, a, index)
-
-def eliminar_combinacion(x, a, index):
-    global raiz
-    if a is raiz:
-        if a.m == 1 and a.p0 is not None:
-            raiz = a.p0
-        return
-
-    prev = a.e[index - 1]
-    next = a.e[index + 1]
-
-    if prev.m > orden:
-        tomar_de_anterior(x, a, prev, index)
-    elif next.m > orden:
-        tomar_de_siguiente(x, a, next, index)
-    else:
-        combinar(a, index)
-
-def tomar_de_anterior(x, a, prev, index):
-    hijo = a.e[index].p
-    hermano = a.e[index - 1].p
-    hijo.e.insert(0, hermano.e.pop())
-    a.e[index - 1] = prev.e.pop()
-    a.e.insert(index, hijo.e.pop(0))
-
-def tomar_de_siguiente(x, a, next, index):
-    hijo = a.e[index].p
-    hermano = a.e[index + 1].p
-    hijo.e.append(next.e.pop(0))
-    a.e[index + 1] = next.e[0]
-    a.e[index] = hijo.e.pop()
-
-def combinar(a, index):
-    global raiz
-    if index == a.m:
-        index -= 1
-
-    hijo = a.e[index].p
-    hermano = a.e[index + 1].p
-    hijo.e.append(a.e[index])
-    hijo.e.extend(hermano.e)
-    a.e.pop(index + 1)
-    a.m -= 1
-
-def imprimir_arbol(nodo, nivel=0):
-    if nodo:
-        print("Nivel", nivel, ":", end=" ")
-        for item in nodo.e:
-            print(item.key, end=" ")
-        print()
-        nivel += 1
-        if nodo.e:
-            for hijo in nodo.e:
-                imprimir_arbol(hijo.p, nivel)
-
-while True:
-    print("\n\n Menú ")
-    print("\n 1_ Insertar ")
-    print("\n 2_ Eliminar ")
-    print("\n 3_ Mostrar ")
-    print("\n 4_ Salir ")
-    print("\n")
-    op = int(input("Ingrese opción: "))
-
-    if op == 1:
-        print("\n Ingrese clave a insertar (Finaliza con -1) ")
-        x = int(input())
-
-        while x >= 0:
-            insertar(x, raiz)
-            print("\n Ingrese clave a insertar (Finaliza con -1) ")
-            x = int(input())
-    elif op == 2:
-        print("Ingrese clave a eliminar (Finaliza con -1) ")
-        x = int(input())
-
-        while x >= 0:
-            eliminar(x, raiz)
-            print("\n Ingrese clave a eliminar (Finaliza con -1) ")
-            x = int(input())
-    elif op == 3:
-        imprimir_arbol(raiz)
-    elif op == 4:
-        break
-        
+            print("Opción no válida. Intente de nuevo.")
+            
