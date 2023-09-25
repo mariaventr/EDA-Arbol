@@ -1,3 +1,19 @@
+T.A.D. Árbol B de orden 2
+Especificación
+1 ) Cada página contiene a lo sumo 4 (2*2) elementos (claves).
+2 ) Cada página, excepto la pagina raíz, contiene 2 elementos por lo menos.
+3 ) Cada página es una página de hoja, o sea que no tiene descendientes, o tiene m+1
+descendientes, donde m es su número de claves en esa página (2<=m<=4).
+4 ) Todas las páginas hoja aparecen al mismo nivel.
+m : cantidad de claves en la página
+ki : clave; 1<=i<=m
+p0 : dirección de la página que contiene claves
+menores que k1
+pi : dirección de la página que contiene claves
+mayores que ki y menores que ki+1
+pm : dirección de la página que contiene claves
+mayores que km
+
 class NodoB:
     def __init__(self, hoja=True):
         self.hoja = hoja
