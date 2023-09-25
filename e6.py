@@ -1,200 +1,111 @@
-class Item:
-    def __init__(self, key):
-        self.key = key
-        self.count = 1
-        self.p = None
+class NodoB:
+    def __init__(self, hoja=True):
+        self.claves = []
+        self.hijos = []
+        self.hoja = hoja
 
-class Pagina:
-    def __init__(self):
-        self.m = 0
-        self.p0 = None
-        self.e = []
-
-orden = 2
-raiz = None
-
-def buscar(a, x):
-    if a is None:
-        return None
-
-    l, r = 0, a.m - 1
-
-    while l <= r:
-        i = (l + r) // 2
-        if a.e[i].key < x:
-            l = i + 1
+    def insertar(self, clave):
+        if self.hoja:
+            self.claves.append(clave)
+            self.claves.sort()
         else:
-            r = i - 1
+            i = 0
+            while i < len(self.claves) and clave > self.claves[i]:
+                i += 1
+            self.hijos[i].insertar(clave)
+            if len(self.hijos[i].claves) > 2:
+                self.dividir_hijo(i)
 
-    return l
+    def dividir_hijo(self, i):
+        nuevo_nodo = NodoB(hoja=self.hijos[i].hoja)
+        medio = self.hijos[i].claves.pop(1)
+        if not self.hijos[i].hoja:
+            nuevo_nodo.hijos = self.hijos[i].hijos[2:]
+            self.hijos[i].hijos = self.hijos[i].hijos[:2]
+        self.claves.insert(i, medio)
+        self.hijos.insert(i + 1, nuevo_nodo)
 
-def insertar(x, a):
-    global raiz
-    if a is None:
-        v = Item(x)
-        raiz = Pagina()
-        raiz.m = 1
-        raiz.e.append(v)
-        return
-
-    index = buscar(a, x)
-
-    if index < a.m and a.e[index].key == x:
-        a.e[index].count += 1
-    else:
-        insertar_pagina(x, a, index)
-
-def insertar_pagina(x, a, index):
-    global raiz
-    v = Item(x)
-    if a.m < 2 * orden:
-        a.e.insert(index, v)
-        a.m += 1
-    else:
-        dividir_pagina(x, a, index)
-
-def dividir_pagina(x, a, index):
-    global raiz
-    b = Pagina()
-    mid = orden
-
-    if index <= orden:
-        mid -= 1
-
-    b.e = a.e[mid + 1:]
-    a.e = a.e[:mid]
-    a.m = len(a.e)
-
-    if index <= orden:
-        insertar_pagina(x, a, index)
-    else:
-        insertar_pagina(x, b, index - mid - 1)
-
-    if a is raiz:
-        raiz = Pagina()
-        raiz.m = 1
-        raiz.e.append(b)
-        raiz.p0 = a
-
-def buscar_elemento(x, a):
-    if a is None:
-        return None
-
-    index = buscar(a, x)
-
-    if index < a.m and a.e[index].key == x:
-        return a.e[index]
-
-    if index <= a.m:
-        return buscar_elemento(x, a.e[index].p)
-
-def eliminar(x, a):
-    if a is None:
-        return
-
-    index = buscar(a, x)
-
-    if index < a.m and a.e[index].key == x:
-        if a.e[index].count > 1:
-            a.e[index].count -= 1
+    def eliminar(self, clave):
+        if clave in self.claves:
+            index = self.claves.index(clave)
+            if self.hoja:
+                self.claves.remove(clave)
+            else:
+                self.hijos[index].eliminar(clave)
+                if len(self.hijos[index].claves) < 1:
+                    self.fusionar_hijo(index)
         else:
-            eliminar_entrada(x, a, index)
-    else:
-        eliminar(x, a.e[index].p)
+            i = 0
+            while i < len(self.claves) and clave > self.claves[i]:
+                i += 1
+            if i < len(self.claves):
+                self.hijos[i].eliminar(clave)
+                if len(self.hijos[i].claves) < 1:
+                    self.fusionar_hijo(i)
 
-def eliminar_entrada(x, a, index):
-    global raiz
-    if a.m > orden:
-        if index > 0:
-            a.e[index - 1].count -= 1
+    def fusionar_hijo(self, i):
+        hijo_actual = self.hijos[i]
+        if i > 0:
+            hermano_izquierdo = self.hijos[i - 1]
+            hermano_izquierdo.claves.append(self.claves.pop(i - 1))
+            hermano_izquierdo.claves += hijo_actual.claves
+            hermano_izquierdo.hijos += hijo_actual.hijos
+            self.hijos.pop(i)
         else:
-            a.e[index + 1].count -= 1
-    else:
-        eliminar_combinacion(x, a, index)
-
-def eliminar_combinacion(x, a, index):
-    global raiz
-    if a is raiz:
-        if a.m == 1 and a.p0 is not None:
-            raiz = a.p0
-        return
-
-    prev = a.e[index - 1]
-    next = a.e[index + 1]
-
-    if prev.m > orden:
-        tomar_de_anterior(x, a, prev, index)
-    elif next.m > orden:
-        tomar_de_siguiente(x, a, next, index)
-    else:
-        combinar(a, index)
-
-def tomar_de_anterior(x, a, prev, index):
-    hijo = a.e[index].p
-    hermano = a.e[index - 1].p
-    hijo.e.insert(0, hermano.e.pop())
-    a.e[index - 1] = prev.e.pop()
-    a.e.insert(index, hijo.e.pop(0))
-
-def tomar_de_siguiente(x, a, next, index):
-    hijo = a.e[index].p
-    hermano = a.e[index + 1].p
-    hijo.e.append(next.e.pop(0))
-    a.e[index + 1] = next.e[0]
-    a.e[index] = hijo.e.pop()
-
-def combinar(a, index):
-    global raiz
-    if index == a.m:
-        index -= 1
-
-    hijo = a.e[index].p
-    hermano = a.e[index + 1].p
-    hijo.e.append(a.e[index])
-    hijo.e.extend(hermano.e)
-    a.e.pop(index + 1)
-    a.m -= 1
-
-def imprimir_arbol(nodo, nivel=0):
-    if nodo:
-        print("Nivel", nivel, ":", end=" ")
-        for item in nodo.e:
-            print(item.key, end=" ")
-        print()
-        if nodo.p0:
-            imprimir_arbol(nodo.p0, nivel + 1)
+            hermano_derecho = self.hijos[i + 1]
+            hermano_derecho.claves.insert(0, self.claves.pop(i))
+            hermano_derecho.claves = hijo_actual.claves + hermano_derecho.claves
+            hermano_derecho.hijos = hijo_actual.hijos + hermano_derecho.hijos
+            self.hijos.pop(i)
+    
+    def mostrar(self, nivel=0):
+        print("Nivel", nivel, ":", str(self.claves))
         nivel += 1
-        if nodo.e:
-            for hijo in nodo.e:
-                imprimir_arbol(hijo.p, nivel)
+        if len(self.hijos) > 0:
+            for i in range(len(self.hijos)):
+                self.hijos[i].mostrar(nivel)
 
-while True:
-    print("\n\n Menú ")
-    print("\n 1_ Insertar ")
-    print("\n 2_ Eliminar ")
-    print("\n 3_ Mostrar ")
-    print("\n 4_ Salir ")
-    print("\n")
-    op = int(input("Ingrese opción: "))
 
-    if op == 1:
-        print("\n Ingrese clave a insertar (Finaliza con -1) ")
-        x = int(input())
+class ArbolB:
+    def __init__(self):
+        self.raiz = NodoB()
 
-        while x >= 0:
-            insertar(x, raiz)
-            print("\n Ingrese clave a insertar (Finaliza con -1) ")
-            x = int(input())
-    elif op == 2:
-        print("Ingrese clave a eliminar (Finaliza con -1) ")
-        x = int(input())
+    def insertar(self, clave):
+        if clave not in self.raiz.claves:
+            self.raiz.insertar(clave)
+            if len(self.raiz.claves) > 2:
+                nueva_raiz = NodoB(hoja=False)
+                nueva_raiz.hijos.append(self.raiz)
+                nueva_raiz.dividir_hijo(0)
+                self.raiz = nueva_raiz
 
-        while x >= 0:
-            eliminar(x, raiz)
-            print("\n Ingrese clave a eliminar (Finaliza con -1) ")
-            x = int(input())
-    elif op == 3:
-        imprimir_arbol(raiz)
-    elif op == 4:
-        break
-                
+    def eliminar(self, clave):
+        if clave in self.raiz.claves:
+            if len(self.raiz.claves) == 1 and not self.raiz.hoja:
+                nueva_raiz = self.raiz.hijos[0]
+                self.raiz = nueva_raiz
+            else:
+                self.raiz.eliminar(clave)
+
+    def mostrar(self):
+        self.raiz.mostrar()
+
+
+# Crear un árbol B de orden 2
+arbol = ArbolB()
+
+# Insertar los valores dados
+valores = [10, 25, 7, 30, 8, 15, 40, 5, 42, 20, 32]
+for valor in valores:
+    arbol.insertar(valor)
+
+# Mostrar el árbol B
+arbol.mostrar()
+
+# Eliminar un valor (por ejemplo, 15)
+valor_a_eliminar = 15
+arbol.eliminar(valor_a_eliminar)
+
+# Mostrar el árbol B después de la eliminación
+arbol.mostrar()
+        
