@@ -1,3 +1,67 @@
+class Nodo:
+    def __init__(self, hoja=True):
+        self.claves = []
+        self.hijos = []
+        self.hoja = hoja
+
+def insertar(arbol, clave):
+    if not arbol:
+        return Nodo([clave])
+
+    i = 0
+    while i < len(arbol.claves) and clave > arbol.claves[i]:
+        i += 1
+
+    if i < len(arbol.claves) and clave == arbol.claves[i]:
+        arbol.claves[i] += 1
+    elif arbol.hoja:
+        arbol.claves.insert(i, clave)
+        arbol.hijos.insert(i, None)
+    else:
+        hijo = insertar(arbol.hijos[i], clave)
+        if not hijo:
+            return None
+        if len(hijo.claves) == 3:
+            arbol.claves.insert(i, hijo.claves.pop(1))
+            arbol.hijos.insert(i + 1, Nodo(hijo.claves[2:]))
+        else:
+            arbol.hijos[i] = hijo
+
+    if len(arbol.claves) == 3:
+        return Nodo([arbol.claves.pop(1)], [arbol, Nodo(arbol.claves[2:])])
+    return arbol
+
+def mostrar(arbol, nivel=0):
+    if arbol:
+        print(f"Nivel {nivel}: {', '.join(map(str, arbol.claves))}")
+        for i, hijo in enumerate(arbol.hijos):
+            mostrar(hijo, nivel + 1)
+
+arbol_b = None
+
+while True:
+    print("\nMenú")
+    print("1_ Insertar")
+    print("2_ Eliminar")
+    print("3_ Mostrar")
+    print("4_ Salir")
+
+    opcion = input("Ingrese opción: ")
+
+    if opcion == "1":
+        clave = int(input("Ingrese clave a insertar: "))
+        arbol_b = insertar(arbol_b, clave)
+    elif opcion == "3":
+        mostrar(arbol_b)
+    elif opcion == "4":
+        break
+        
+
+
+
+
+
+
 class Item:
     def __init__(self, key):
         self.key = key
