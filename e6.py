@@ -68,27 +68,30 @@ class NodoB:
 
 class ArbolB:
     def __init__(self):
-        self.raiz = NodoB()
+        self.raiz = None
 
     def insertar(self, clave):
-        if clave not in self.raiz.claves:
-            self.raiz.insertar(clave)
-            if len(self.raiz.claves) > 2:
-                nueva_raiz = NodoB(hoja=False)
-                nueva_raiz.hijos.append(self.raiz)
-                nueva_raiz.dividir_hijo(0)
-                self.raiz = nueva_raiz
+        if self.raiz is None:
+            self.raiz = NodoB()
+        self.raiz.insertar(clave)
+        if len(self.raiz.claves) > 2:
+            nueva_raiz = NodoB(hoja=False)
+            nueva_raiz.hijos.append(self.raiz)
+            nueva_raiz.dividir_hijo(0)
+            self.raiz = nueva_raiz
 
     def eliminar(self, clave):
-        if clave in self.raiz.claves:
-            if len(self.raiz.claves) == 1 and not self.raiz.hoja:
-                nueva_raiz = self.raiz.hijos[0]
-                self.raiz = nueva_raiz
-            else:
-                self.raiz.eliminar(clave)
+        if self.raiz:
+            self.raiz.eliminar(clave)
+            if len(self.raiz.claves) == 0:
+                if self.raiz.hoja:
+                    self.raiz = None
+                else:
+                    self.raiz = self.raiz.hijos[0]
 
     def mostrar(self):
-        self.raiz.mostrar()
+        if self.raiz:
+            self.raiz.mostrar()
 
 
 # Crear un árbol B de orden 2
@@ -108,4 +111,3 @@ arbol.eliminar(valor_a_eliminar)
 
 # Mostrar el árbol B después de la eliminación
 arbol.mostrar()
-        
